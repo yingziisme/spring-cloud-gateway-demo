@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title>Spring Boot Websocket</title>
+    <script src="jquery-3.4.1.min.js"></script>
+    <script src="sockjs.min.js" type="text/javascript"></script>
+    <script src="stomp.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        var stompCient = null;
+        var host = "http://localhost:10001/websocket";
+
+        function setConnected(connected) {
+            document.getElementById("connectBt").disabled = connected;
+            document.getElementById("disconnectBt").disabled = !connected;
+            document.getElementById("conversationDiv").style.visibility = connected ? 'visible' : 'hidden';
+
+            $('#response').html();
+        }
+
+        function testGet() {
+
+        }
+
+        function connect() {
+            console.log("====");
+            var socket = new SockJS(host + "/websocket");
+            stompCient = Stomp.over(socket);
+            stompCient.connect({}, function (frame) {
+                setConnected(true);
+                console.log("connected: " + frame);
+                stompCient.subscribe('/subscribe', function (response) {
+                    showResponse(response.body);
+                })
+            })
+        }
+
+        function disconnect() {
+            if (stompCient != null) {
+                stompCient.disconnect();
+            }
+            setConnected(false);
+            console.log("disconnected");
+        }
+
+        function send() {
+            var name = $('#name').val();
+            var message = $('#message').val();
+            stompCient.send("/chat", {}, name + ":" + message);
+        }
+
+        function showResponse(message) {
+            console.log("===respnse: "+message)
+            var respons = $('#response');
+            respons.html(message);
+        }
+    </script>
+</head>
+
+<body onload="disconnect();">
+<noscript>
+    <h2 style="color: #ff0000">not support websocket</h2>
+</noscript>
+<div>
+    <div>
+        <button id="test" onabort="testGet()">test</button>
+        <p id="resText"></p>
+    </div>
+    <div>
+        <button id="connectBt" onclick="connect()"> connect</button>
+        <button id="disconnectBt" onclick="disconnect()">disconnect</button>
+    </div>
+    <div id="conversationDiv">
+        <label>enter your name</label> <input type="text" id="name"/>
+        <br>
+        <label>enter message</label> <input type="text" id="message"/>
+        <button id="send" onclick="send()">send</button>
+        <p id="response"></p>
+    </div>
+</div>
+
+</body>
+</html>
